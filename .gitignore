@@ -1,0 +1,14 @@
+# Ignore Python bytecode and cache files
+__pycache__/
+*.py[cod]
+
+# Ignore virtual environments
+env/
+statapp311/
+venv/
+.env/
+.venv/
+.idea/
+
+# Ignore environment configuration files
+.env
