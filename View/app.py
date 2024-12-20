@@ -10,6 +10,7 @@ from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas, FigureCanvasQTAgg
 
+from PyQt6 import uic
 from PyQt6.QtWidgets import (
     QMainWindow, QApplication,
     QLabel, QToolBar, QStatusBar, QCheckBox, QPushButton, QDialog, QDialogButtonBox, QVBoxLayout, QFileDialog,
@@ -21,6 +22,10 @@ from PyQt6.QtCore import Qt, QSize
 from Model.microbiome_class import MicrobiomeDataAnalyzer
 from Model.modificator import otu_table, tax_table
 
+from matplotlib.backends.backend_qt5agg import (
+    FigureCanvasQTAgg as FigureCanvas,
+    NavigationToolbar2QT as NavigationToolbar,
+)
 
 class CustomDialog(QDialog):
     def __init__(self):
@@ -48,91 +53,108 @@ class MplCanvas(FigureCanvasQTAgg):
 
 class MainWindow(QMainWindow):
 
+    # def __init__(self):
+    #     super(MainWindow, self).__init__()
+    #
+    #     self.setWindowTitle("Microbiome Data Analyzer")
+    #     self.setMinimumSize(QSize(600, 400))
+    #
+    #     self.file_path = None
+    #     self.label = None
+    #     self.table_view = None
+    #     self.setup_toolbar()
+    #     self.setup_menu()
+    #     self.setup_layout()
+
     def __init__(self):
-        super(MainWindow, self).__init__()
+        super().__init__()
+        uic.loadUi("statapp.ui", self)
 
-        self.setWindowTitle("Microbiome Data Analyzer")
-        self.setMinimumSize(QSize(600, 400))
+        # Connect the existing action from the UI file
+        self.menuImport.triggered.connect(self.open_file_dialog)
 
-        self.file_path = None
-        self.label = None
-        self.table_view = None
-        self.setup_toolbar()
-        self.setup_menu()
-        self.setup_layout()
+        # Check if self.label exists; if not, create one
+        if not hasattr(self, 'label'):
+            self.label = QLabel("Status: Ready", self)
+            self.label.setGeometry(10, 10, 200, 30)  # Set position and size
+            self.setCentralWidget(self.label)  # Add to the main window layout
+
+# Random forest
+# how to disconnect gui from the calculation process
+# make on background process
 
     # Main layout of the application
-    def setup_layout(self):
-        self.label = QLabel("Statistical Analysis of data!", self)
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        layout = QVBoxLayout()
-        layout.addWidget(self.label)
-
-        central_widget = QWidget()
-        central_widget.setLayout(layout)
-        self.setCentralWidget(central_widget)
-
-    def setup_toolbar(self):
-        toolbar = QToolBar("All instruments")
-        toolbar.setIconSize(QSize(16, 16))
-        self.addToolBar(toolbar)
-
-        submenu_action = QAction(QIcon("document-import.png"), "Import", self)
-        submenu_action.setStatusTip("Import file")
-        submenu_action.triggered.connect(self.create_import_submenu)
-        toolbar.addAction(submenu_action)
-        toolbar.addSeparator()
-
-        toolbar.addAction(self.create_export_action())
-        toolbar.addSeparator()
-
-        toolbar.addAction(self.show_history_action())
-
-        self.setStatusBar(QStatusBar(self))
-
-    def setup_menu(self):
-        menu = self.menuBar()
-        file_menu = menu.addMenu("&File")
-
-        file_submenu = file_menu.addMenu("Import")
-        file_submenu.addAction(self.create_import_action_megan())
-        file_submenu.addAction(self.create_import_action_other())
-        file_submenu.addAction(self.create_import_action_metadata())
-        file_menu.addSeparator()
-
-        file_menu.addAction(self.create_export_action())
-        file_menu.addSeparator()
-
-        file_menu.addAction(self.import_from_server_action())
-        file_menu.addSeparator()
-
-        file_submenu = file_menu.addMenu("Submenu")
-        file_submenu.addAction(self.show_history_action())
-
-        file_menu = menu.addMenu("&Window")
-
-        file_menu = menu.addMenu("&Help")
-        file_menu.addAction(self.create_help_action())
-        file_menu.addSeparator()
-
-    def create_import_submenu(self):
-        menu = QMenu(self)
-
-        action1 = QAction("MEGAN table", self)
-        action1.triggered.connect(lambda: self.open_file_dialog())
-        menu.addAction(action1)
-
-        action2 = QAction("Other table", self)
-        action2.triggered.connect(lambda: self.open_file_dialog())
-        menu.addAction(action2)
-
-        metadata = QAction("Metadata", self)
-        metadata.triggered.connect(lambda: self.open_file_dialog())
-        menu.addAction(metadata)
-
-        cursor_pos = self.mapFromGlobal(self.cursor().pos())
-        menu.exec(self.mapToGlobal(cursor_pos))
+    # def setup_layout(self):
+    #     self.label = QLabel("Statistical Analysis of data!", self)
+    #     self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    #
+    #     layout = QVBoxLayout()
+    #     layout.addWidget(self.label)
+    #
+    #     central_widget = QWidget()
+    #     central_widget.setLayout(layout)
+    #     self.setCentralWidget(central_widget)
+    #
+    # def setup_toolbar(self):
+    #     toolbar = QToolBar("All instruments")
+    #     toolbar.setIconSize(QSize(16, 16))
+    #     self.addToolBar(toolbar)
+    #
+    #     submenu_action = QAction(QIcon("document-import.png"), "Import", self)
+    #     submenu_action.setStatusTip("Import file")
+    #     submenu_action.triggered.connect(self.create_import_submenu)
+    #     toolbar.addAction(submenu_action)
+    #     toolbar.addSeparator()
+    #
+    #     toolbar.addAction(self.create_export_action())
+    #     toolbar.addSeparator()
+    #
+    #     toolbar.addAction(self.show_history_action())
+    #
+    #     self.setStatusBar(QStatusBar(self))
+    #
+    # def setup_menu(self):
+    #     menu = self.menuBar()
+    #     file_menu = menu.addMenu("&File")
+    #
+    #     file_submenu = file_menu.addMenu("Import")
+    #     file_submenu.addAction(self.create_import_action_megan())
+    #     file_submenu.addAction(self.create_import_action_other())
+    #     file_submenu.addAction(self.create_import_action_metadata())
+    #     file_menu.addSeparator()
+    #
+    #     file_menu.addAction(self.create_export_action())
+    #     file_menu.addSeparator()
+    #
+    #     file_menu.addAction(self.import_from_server_action())
+    #     file_menu.addSeparator()
+    #
+    #     file_submenu = file_menu.addMenu("Submenu")
+    #     file_submenu.addAction(self.show_history_action())
+    #
+    #     file_menu = menu.addMenu("&Window")
+    #
+    #     file_menu = menu.addMenu("&Help")
+    #     file_menu.addAction(self.create_help_action())
+    #     file_menu.addSeparator()
+    #
+    # def create_import_submenu(self):
+    #     menu = QMenu(self)
+    #
+    #     action1 = QAction("MEGAN table", self)
+    #     action1.triggered.connect(lambda: self.open_file_dialog())
+    #     menu.addAction(action1)
+    #
+    #     action2 = QAction("Other table", self)
+    #     action2.triggered.connect(lambda: self.open_file_dialog())
+    #     menu.addAction(action2)
+    #
+    #     metadata = QAction("Metadata", self)
+    #     metadata.triggered.connect(lambda: self.open_file_dialog())
+    #     menu.addAction(metadata)
+    #
+    #     cursor_pos = self.mapFromGlobal(self.cursor().pos())
+    #     menu.exec(self.mapToGlobal(cursor_pos))
 
     # Actions on the toolbar and menu
     def create_import_action_megan(self):
@@ -280,16 +302,16 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(central_widget)
 
-    def open_single_file_dialog(self):
-        filename, ok = QFileDialog.getOpenFileName(
-            self,
-            "Select a File",
-            "D:\\icons\\avatar\\",
-            "Images (*.png *.jpg)"
-        )
-        if filename:
-            path = Path(filename)
-            self.filename_edit.setText(str(path))
+    # def open_single_file_dialog(self):
+    #     filename, ok = QFileDialog.getOpenFileName(
+    #         self,
+    #         "Select a File",
+    #         "D:\\icons\\avatar\\",
+    #         "Images (*.png *.jpg)"
+    #     )
+    #     if filename:
+    #         path = Path(filename)
+    #         self.filename_edit.setText(str(path))
 
 app = QApplication(sys.argv)
 w = MainWindow()

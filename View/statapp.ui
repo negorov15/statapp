@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1285</width>
+    <height>679</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="spacing">
+     <number>9</number>
+    </property>
+    <property name="rightMargin">
+     <number>11</number>
+    </property>
+    <item>
+     <widget class="QWidget" name="widget" native="true"/>
+    </item>
+    <item>
+     <spacer name="verticalSpacer">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item>
+     <widget class="QTableWidget" name="tableWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Panel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Sunken</enum>
+      </property>
+      <property name="lineWidth">
+       <number>1</number>
+      </property>
+      <property name="showGrid">
+       <bool>true</bool>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
+      </property>
+      <property name="rowCount">
+       <number>5</number>
+      </property>
+      <property name="columnCount">
+       <number>18</number>
+      </property>
+      <attribute name="horizontalHeaderCascadingSectionResizes">
+       <bool>false</bool>
+      </attribute>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <column>
+       <property name="text">
+        <string>Domain</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Kingdom</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Phylum</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Class</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Order</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Family</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Genus</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Species</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>sample_1</string>
+       </property>
+      </column>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1285</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <widget class="QMenu" name="menuImport">
+     <property name="title">
+      <string>Import</string>
+     </property>
+     <addaction name="actionMEGAN_file"/>
+     <addaction name="actionOther"/>
+    </widget>
+    <addaction name="menuImport"/>
+    <addaction name="actionExport_2"/>
+   </widget>
+   <widget class="QMenu" name="menuWindow">
+    <property name="title">
+     <string>Window</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuWindow"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <action name="actionExport_2">
+   <property name="text">
+    <string>Export</string>
+   </property>
+  </action>
+  <action name="actionMEGAN_file">
+   <property name="text">
+    <string>MEGAN file</string>
+   </property>
+  </action>
+  <action name="actionOther">
+   <property name="text">
+    <string>Other</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
