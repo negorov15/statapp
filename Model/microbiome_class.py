@@ -27,14 +27,19 @@ class MicrobiomeDataAnalyzer:
         taxa_mapping = self.Taxa_table[rank]
         rank_df = self.OTU_table.groupby(taxa_mapping, axis=0).sum().T
 
-        rank_df.plot(kind='bar', stacked=True, ax=canvas.axes)
+        resulting_plot = rank_df.plot(kind='bar', stacked=True, ax=canvas.axes)
 
-        canvas.axes.set_ylabel('Abundance', fontsize=20)
-        canvas.axes.tick_params(axis='x', labelsize=14, rotation=45)
-        canvas.axes.tick_params(axis='y', labelsize=14)
-        canvas.axes.legend(title=rank, fontsize='10', title_fontsize='12', loc='upper left', bbox_to_anchor=(1.05, 1), borderaxespad=0.)
+        canvas.axes.set_title(f'Abundance of {rank}')
+        canvas.axes.set_ylabel('Abundance')
+        canvas.axes.tick_params(axis='x', rotation=45)  # Rotate labels
+        canvas.axes.legend(title=rank, loc='upper left', bbox_to_anchor=(1.05, 1), borderaxespad=0.)
+        canvas.figure.tight_layout()  # Automatically adjust layout to fit labels
+        canvas.draw()
+
+        return resulting_plot, rank_df
 
     def plot_top(self, top, canvas):
+        # Calculate top taxa and plot
         total_counts = self.OTU_table.sum(axis=1)
         top_otus = total_counts.nlargest(top).index
 
@@ -45,18 +50,26 @@ class MicrobiomeDataAnalyzer:
             top_otus_tax_rank[otu] = specific_rank
 
         filtered_df = self.OTU_table.loc[top_otus]
+        filtered_df.index = [top_otus_tax_rank[otu] for otu in filtered_df.index]
         df_t = filtered_df.T
+        totals = df_t.sum(axis=1)
 
-        df_t.plot(kind='bar', stacked=True, ax=canvas.axes)
+        # Plot stacked bar chart
+        # pandas' built-in plotting function, which wraps around Matplotlib.
+        resulting_plot = df_t.plot(kind='bar', stacked=True, ax=canvas.axes)
 
-        canvas.axes.set_title(f'Top {top} taxa by read count', fontsize=10)
-        canvas.axes.set_ylabel('Read Count', fontsize=10)
-        canvas.axes.tick_params(axis='x', labelsize=7, rotation=45)
-        canvas.axes.tick_params(axis='y', labelsize=7)
+        # Customize axes
+        canvas.axes.set_title(f'Top {top} taxa by read count')
+        canvas.axes.set_ylabel('Read Count')
+        # Update the legend (if required)
+        canvas.axes.legend(title="Taxa", loc='upper left')
 
-        legend_labels = [top_otus_tax_rank[otu] for otu in top_otus]
-        canvas.axes.legend(legend_labels, fontsize='5', title_fontsize='6', loc='upper left', bbox_to_anchor=(1.05, 1), borderaxespad=0.)
+        # Adjust x-axis labels
+        canvas.axes.tick_params(axis='x', rotation=45)  # Rotate labels
+        canvas.figure.tight_layout()  # Automatically adjust layout to fit labels
+        canvas.draw()
 
+        return resulting_plot, df_t
 
     def plot_pcoa(self, canvas):
         distance = self.beta_diversity()

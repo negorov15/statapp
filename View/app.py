@@ -3,21 +3,25 @@ import datatable as dt
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import plotly.express as px
 
-import matplotlib
-matplotlib.use('QtAgg')  # Use the correct backend for PyQt6
+import matplotlib as mpl
+mpl.use('QtAgg')  # Use the correct backend for PyQt6
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas, FigureCanvasQTAgg
+from matplotlib.backends.backend_qtagg import (
+    FigureCanvasQTAgg,
+    NavigationToolbar2QT as NavigationToolbar,
+)
 
 from PyQt6 import uic
 from PyQt6.QtWidgets import (
     QMainWindow, QApplication,
     QLabel, QToolBar, QStatusBar, QCheckBox, QPushButton, QDialog, QDialogButtonBox, QVBoxLayout, QFileDialog,
-    QGridLayout, QWidget, QMenu, QHBoxLayout, QTableView, QSizePolicy
+    QGridLayout, QWidget, QMenu, QHBoxLayout, QTableView, QSizePolicy, QSplitter
 )
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QStandardItemModel, QStandardItem
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import Qt, QSize, QAbstractTableModel
 
 from Model.microbiome_class import MicrobiomeDataAnalyzer
 from Model.modificator import otu_table, tax_table
@@ -27,44 +31,36 @@ from matplotlib.backends.backend_qt5agg import (
     NavigationToolbar2QT as NavigationToolbar,
 )
 
-class CustomDialog(QDialog):
-    def __init__(self):
-        super().__init__()
-
-        self.setWindowTitle("Import your file!")
-
-        QBtn = QDialogButtonBox.StandardButton.Ok
-
-        self.buttonBox = QDialogButtonBox(QBtn)
-        self.buttonBox.accepted.connect(self.accept)
-
-        self.layout = QVBoxLayout()
-        message = QLabel("Implement the file open dialog box!")
-        self.layout.addWidget(message)
-        self.layout.addWidget(self.buttonBox)
-        self.setLayout(self.layout)
-
 class MplCanvas(FigureCanvasQTAgg):
-
-    def __init__(self, parent=None, width=40, height=24, dpi=100):
+    def __init__(self, parent=None, width=8, height=6, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
-        super(MplCanvas, self).__init__(fig)
+        super().__init__(fig)
+
+class TableModel(QAbstractTableModel):
+    def __init__(self, data):
+        super().__init__()
+        self._data = data
+
+    def rowCount(self, index):
+        return self._data.shape[0]
+
+    def columnCount(self, parnet=None):
+        return self._data.shape[1]
+
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+        if index.isValid():
+            if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
+                value = self._data.iloc[index.row(), index.column()]
+                return str(value)
+
+    def headerData(self, col, orientation, role):
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
+            return self._data.columns[col]
+    def flags(self, index):
+        return Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled
 
 class MainWindow(QMainWindow):
-
-    # def __init__(self):
-    #     super(MainWindow, self).__init__()
-    #
-    #     self.setWindowTitle("Microbiome Data Analyzer")
-    #     self.setMinimumSize(QSize(600, 400))
-    #
-    #     self.file_path = None
-    #     self.label = None
-    #     self.table_view = None
-    #     self.setup_toolbar()
-    #     self.setup_menu()
-    #     self.setup_layout()
 
     def __init__(self):
         super().__init__()
@@ -72,151 +68,21 @@ class MainWindow(QMainWindow):
 
         # Connect the existing action from the UI file
         self.menuImport.triggered.connect(self.open_file_dialog)
+        self.plot_top_button.clicked.connect(self.plot_stat)
+        self.plot_rank_button.clicked.connect(self.plot_rank)
+        self.plot_pcoa_button.clicked.connect(self.plot_pcoa)
 
-        # Check if self.label exists; if not, create one
-        if not hasattr(self, 'label'):
-            self.label = QLabel("Status: Ready", self)
-            self.label.setGeometry(10, 10, 200, 30)  # Set position and size
-            self.setCentralWidget(self.label)  # Add to the main window layout
+        # setup default plot settings
+        mpl.rcParams['font.size'] = 8
+        mpl.rcParams['axes.titlesize'] = 8
+        mpl.rcParams['axes.labelsize'] = 8
+        mpl.rcParams['xtick.labelsize'] = 8
+        mpl.rcParams['ytick.labelsize'] = 8
+        mpl.rcParams['legend.fontsize'] = 8
 
 # Random forest
 # how to disconnect gui from the calculation process
 # make on background process
-
-    # Main layout of the application
-    # def setup_layout(self):
-    #     self.label = QLabel("Statistical Analysis of data!", self)
-    #     self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    #
-    #     layout = QVBoxLayout()
-    #     layout.addWidget(self.label)
-    #
-    #     central_widget = QWidget()
-    #     central_widget.setLayout(layout)
-    #     self.setCentralWidget(central_widget)
-    #
-    # def setup_toolbar(self):
-    #     toolbar = QToolBar("All instruments")
-    #     toolbar.setIconSize(QSize(16, 16))
-    #     self.addToolBar(toolbar)
-    #
-    #     submenu_action = QAction(QIcon("document-import.png"), "Import", self)
-    #     submenu_action.setStatusTip("Import file")
-    #     submenu_action.triggered.connect(self.create_import_submenu)
-    #     toolbar.addAction(submenu_action)
-    #     toolbar.addSeparator()
-    #
-    #     toolbar.addAction(self.create_export_action())
-    #     toolbar.addSeparator()
-    #
-    #     toolbar.addAction(self.show_history_action())
-    #
-    #     self.setStatusBar(QStatusBar(self))
-    #
-    # def setup_menu(self):
-    #     menu = self.menuBar()
-    #     file_menu = menu.addMenu("&File")
-    #
-    #     file_submenu = file_menu.addMenu("Import")
-    #     file_submenu.addAction(self.create_import_action_megan())
-    #     file_submenu.addAction(self.create_import_action_other())
-    #     file_submenu.addAction(self.create_import_action_metadata())
-    #     file_menu.addSeparator()
-    #
-    #     file_menu.addAction(self.create_export_action())
-    #     file_menu.addSeparator()
-    #
-    #     file_menu.addAction(self.import_from_server_action())
-    #     file_menu.addSeparator()
-    #
-    #     file_submenu = file_menu.addMenu("Submenu")
-    #     file_submenu.addAction(self.show_history_action())
-    #
-    #     file_menu = menu.addMenu("&Window")
-    #
-    #     file_menu = menu.addMenu("&Help")
-    #     file_menu.addAction(self.create_help_action())
-    #     file_menu.addSeparator()
-    #
-    # def create_import_submenu(self):
-    #     menu = QMenu(self)
-    #
-    #     action1 = QAction("MEGAN table", self)
-    #     action1.triggered.connect(lambda: self.open_file_dialog())
-    #     menu.addAction(action1)
-    #
-    #     action2 = QAction("Other table", self)
-    #     action2.triggered.connect(lambda: self.open_file_dialog())
-    #     menu.addAction(action2)
-    #
-    #     metadata = QAction("Metadata", self)
-    #     metadata.triggered.connect(lambda: self.open_file_dialog())
-    #     menu.addAction(metadata)
-    #
-    #     cursor_pos = self.mapFromGlobal(self.cursor().pos())
-    #     menu.exec(self.mapToGlobal(cursor_pos))
-
-    # Actions on the toolbar and menu
-    def create_import_action_megan(self):
-        import_action = QAction(QIcon("globe.png"), "MEGAN table", self)
-        import_action.setStatusTip("MEGAN table")
-        # You can enter keyboard shortcuts using key names (e.g. Ctrl+p)
-        # Qt.namespace identifiers (e.g. Qt.CTRL + Qt.Key_P)
-        # or system agnostic identifiers (e.g. QKeySequence.StandardKey.Print)
-
-        import_action.triggered.connect(self.open_file_dialog)
-        return import_action
-
-    def create_import_action_other(self):
-        import_action = QAction(QIcon("document-import.png"), "Other", self)
-        import_action.setStatusTip("other")
-        # You can enter keyboard shortcuts using key names (e.g. Ctrl+p)
-        # Qt.namespace identifiers (e.g. Qt.CTRL + Qt.Key_P)
-        # or system agnostic identifiers (e.g. QKeySequence.StandardKey.Print)
-
-        import_action.triggered.connect(self.open_file_dialog)
-        return import_action
-
-    def create_import_action_metadata(self):
-        import_action = QAction(QIcon("document-import.png"), "Import metadata", self)
-        import_action.setStatusTip("Import metadata")
-        # You can enter keyboard shortcuts using key names (e.g. Ctrl+p)
-        # Qt.namespace identifiers (e.g. Qt.CTRL + Qt.Key_P)
-        # or system agnostic identifiers (e.g. QKeySequence.StandardKey.Print)
-
-        import_action.triggered.connect(self.open_file_dialog)
-        return import_action
-
-    def create_export_action(self):
-        export_action = QAction(QIcon("inbox-upload.png"), "Export file", self)
-        export_action.setStatusTip("Export file")
-        export_action.triggered.connect(self.onMyToolBarButtonClick)
-        return export_action
-
-    def show_history_action(self):
-        show_history_action = QAction(QIcon("clock.png"), "Show history", self)
-        show_history_action.setStatusTip("Show history of uploads")
-        show_history_action.triggered.connect(self.onMyToolBarButtonClick)
-        return show_history_action
-
-    def import_from_server_action(self):
-        import_from_server_action = QAction(QIcon("server--arrow.png"), "Import from server", self)
-        import_from_server_action.setStatusTip("Select and import from server")
-        return import_from_server_action
-
-    def create_help_action(self):
-        help_action = QAction(QIcon("globe.png"), "Ask in forum", self)
-        help_action.setStatusTip("Ask for help in forum!")
-        return help_action
-
-    # Functions triggered by actions
-    def onMyToolBarButtonClick(self, s):
-        print("click", s)
-
-    def button_clicked(self, s):
-        print("click", s)
-        dlg = CustomDialog()
-        dlg.exec()
 
     def open_file_dialog(self):
         dialog = QFileDialog(self)
@@ -227,10 +93,12 @@ class MainWindow(QMainWindow):
         if dialog.exec():
             file_name = dialog.selectedFiles()
             if file_name:
-                self.file_path = file_name[0]
-                otu_mat, tax_mat, metadata = self.process_file(self.file_path)
-                input = MicrobiomeDataAnalyzer(otu_mat, tax_mat, metadata)
-                self.plot_stat(input)
+                file_path = file_name[0]
+                otu_mat, tax_mat, metadata = self.process_file(file_path)
+                self.data_input = MicrobiomeDataAnalyzer(otu_mat, tax_mat, metadata) # Does saving input data as attribute make sense?
+        DT = self.data_input.OTU_table
+        model = TableModel(DT)
+        self.tableView.setModel(model)
 
     def process_file(self, file_path):
         otu_mat = otu_table(file_path)
@@ -252,86 +120,66 @@ class MainWindow(QMainWindow):
         metadata_alice_bob = pd.DataFrame(metadata)
         return otu_mat, tax_mat, metadata_alice_bob
 
-    def plot_stat(self, input):
+    # Cleans subplots for new plotting functions
+    def clear_canvas(self):
+        self.graph_widget.axes.clear()
 
-        DT = dt.Frame(input.OTU_table)
-        self.label.setText(f"Selected file: {self.file_path}\nOTU Table: {DT}")
+    def plot_stat(self):
+        self.clear_canvas()
+        # Use the input's plot_top function to render the plot
+        top_plot, top_df = self.data_input.plot_top(5, self.graph_widget)
+        # Calculate row-wise totals for percentages
+        totals = top_df.sum(axis=1)
 
-        # Create the table view
-        self.table_view = QTableView()
+        def on_click(event):
+            # Check if the click occurred inside the axes
+            if event.inaxes == self.graph_widget.axes:
+                for bar_group, group_name in zip(top_plot.containers, top_df.columns):
+                    for rect, value, total in zip(bar_group, top_df[group_name], totals):
+                        height = rect.get_height()
+                        # Check if the mouse click is inside the rectangle
+                        if rect.contains(event)[0]:  # Returns (True, details) if inside
+                            taxon = group_name
+                            percentage = f'{(value / total) * 100:.1f}%'  # Calculate percentage
+                            self.statusBar().showMessage(f"Taxon:{taxon}, Percentage: {percentage}, Read Count: {height}")
+                            break
 
-        # Create a model
-        model = QStandardItemModel(DT.nrows, DT.ncols)
+        # Connect the event handler to the canvas
+        self.graph_widget.mpl_connect("button_press_event", on_click)
 
-        # Set headers
-        model.setHorizontalHeaderLabels(DT.names)
+    def plot_rank(self):
+        self.clear_canvas()
 
-        # Fill the model with data
-        for i in range(DT.nrows):
-            for j in range(DT.ncols):
-                item = QStandardItem(str(DT[i, j]))
-                model.setItem(i, j, item)
+        # Use the input's plot_top function to render the plot
+        rank_plot, rank_df = self.data_input.plot_rank("Phylum", self.graph_widget)
+        # Calculate row-wise totals for percentages
+        totals = rank_df.sum(axis=1)
+        def on_click(event):
+            # Check if the click occurred inside the axes
+            if event.inaxes == self.graph_widget.axes:
+                for bar_group, group_name in zip(rank_plot.containers, rank_df.columns):
+                    for rect, value, total in zip(bar_group, rank_df[group_name], totals):
+                        height = rect.get_height()
+                        # Check if the mouse click is inside the rectangle
+                        if rect.contains(event)[0]:  # Returns (True, details) if inside
+                            taxon = group_name
+                            percentage = f'{(value / total) * 100:.1f}%'  # Calculate percentage
+                            self.statusBar().showMessage(f"Taxon:{taxon}, Percentage: {percentage}, Read Count: {height}")
+                            break
 
-        # Assign the model to the table view
-        self.table_view.setModel(model)
+        # Connect the event handler to the canvas
+        self.graph_widget.mpl_connect("button_press_event", on_click)
 
-        # Optional: Set alternating row colors for better readability
-        self.table_view.setAlternatingRowColors(True)
+    def plot_pcoa(self):
+        ...
 
-        sc_top = MplCanvas(self, dpi=100)
-        # sc_rank = MplCanvas(self, width=3, height=2, dpi=100)
-        # sc_pcoa = MplCanvas(self, width=3, height=2, dpi=100)
-
-        # Set maximum size
-        sc_top.setMaximumSize(800, 400)  # Set maximum width and height
-
-        # Plot on canvas
-        input.plot_top(5, sc_top)
-        # input.plot_rank("Genus", sc_rank)
-        # input.plot_pcoa(sc_pcoa)
-
-        # Set layout
-        layout = QVBoxLayout()
-        layout.addWidget(sc_top)
-        # layout.addWidget(sc_rank)
-        # layout.addWidget(sc_pcoa)
-        layout.addWidget(self.table_view)
-
-        central_widget = QWidget()
-        central_widget.setLayout(layout)
-
-        self.setCentralWidget(central_widget)
-
-    # def open_single_file_dialog(self):
-    #     filename, ok = QFileDialog.getOpenFileName(
-    #         self,
-    #         "Select a File",
-    #         "D:\\icons\\avatar\\",
-    #         "Images (*.png *.jpg)"
-    #     )
-    #     if filename:
-    #         path = Path(filename)
-    #         self.filename_edit.setText(str(path))
+    def on_plot_click(self, event):
+        if event.inaxes:  # Check if the click is inside the plot area
+            x, y = event.xdata, event.ydata
+            # Display the clicked coordinates
+            self.statusBar().showMessage(f"Clicked at: x={x:.2f}, y={y:.2f}")
 
 app = QApplication(sys.argv)
 w = MainWindow()
 w.show()
 app.exec()
-
-# Todo
-# Import file and apply functions from thesis
-# Separete view and model
-# Separate functions in separate files and classes
-# Create a backup (github)
-
-# SUbmenu for import: megan or other
-# One class for functions
-# Include metadata
-
-# Data tabels in python
-# Figure canvas
-
-# metadata: sample id, groups
-# Qiime to metadata
-
-#datatable

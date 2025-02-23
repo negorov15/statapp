@@ -14,7 +14,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
     <property name="spacing">
      <number>9</number>
     </property>
@@ -22,116 +22,77 @@
      <number>11</number>
     </property>
     <item>
-     <widget class="QWidget" name="widget" native="true"/>
+     <widget class="MplCanvas" name="graph_widget" native="true"/>
     </item>
     <item>
-     <spacer name="verticalSpacer">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <property name="bottomMargin">
+       <number>0</number>
       </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item>
-     <widget class="QTableWidget" name="tableWidget">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="autoFillBackground">
-       <bool>false</bool>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::Panel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Sunken</enum>
-      </property>
-      <property name="lineWidth">
-       <number>1</number>
-      </property>
-      <property name="showGrid">
-       <bool>true</bool>
-      </property>
-      <property name="wordWrap">
-       <bool>true</bool>
-      </property>
-      <property name="rowCount">
-       <number>5</number>
-      </property>
-      <property name="columnCount">
-       <number>18</number>
-      </property>
-      <attribute name="horizontalHeaderCascadingSectionResizes">
-       <bool>false</bool>
-      </attribute>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <column>
-       <property name="text">
-        <string>Domain</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Kingdom</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Phylum</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Class</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Order</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Family</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Genus</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Species</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>sample_1</string>
-       </property>
-      </column>
-      <column/>
-      <column/>
-      <column/>
-      <column/>
-      <column/>
-      <column/>
-      <column/>
-      <column/>
-      <column/>
-     </widget>
+      <item>
+       <widget class="QPushButton" name="plot_top_button">
+        <property name="text">
+         <string>Plot top 5 taxa</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="plot_rank_button">
+        <property name="text">
+         <string>Plot rank</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="plot_pcoa_button">
+        <property name="text">
+         <string>Plot PCoA</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_4">
+        <property name="text">
+         <string>PushButton</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_5">
+        <property name="text">
+         <string>PushButton</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QTableView" name="tableView">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::Panel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Sunken</enum>
+        </property>
+        <property name="lineWidth">
+         <number>1</number>
+        </property>
+        <property name="showGrid">
+         <bool>true</bool>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>
@@ -154,6 +115,7 @@
       <string>Import</string>
      </property>
      <addaction name="actionMEGAN_file"/>
+     <addaction name="actionFrom_MeganServer"/>
      <addaction name="actionOther"/>
     </widget>
     <addaction name="menuImport"/>
@@ -183,12 +145,25 @@
     <string>MEGAN file</string>
    </property>
   </action>
+  <action name="actionFrom_MeganServer">
+   <property name="text">
+    <string>From MeganServer</string>
+   </property>
+  </action>
   <action name="actionOther">
    <property name="text">
     <string>Other</string>
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>MplCanvas</class>
+   <extends>QWidget</extends>
+   <header location="global">app</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
