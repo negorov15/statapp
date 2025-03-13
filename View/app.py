@@ -1,18 +1,11 @@
 import sys
-import datatable as dt
-import numpy as np
+import os
 import pandas as pd
-from pathlib import Path
-import plotly.express as px
 
 import matplotlib as mpl
 mpl.use('QtAgg')  # Use the correct backend for PyQt6
-from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_qtagg import (
-    FigureCanvasQTAgg,
-    NavigationToolbar2QT as NavigationToolbar,
-)
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
 from PyQt6 import uic
 from PyQt6.QtWidgets import (
@@ -71,6 +64,9 @@ class MainWindow(QMainWindow):
         self.plot_top_button.clicked.connect(self.plot_stat)
         self.plot_rank_button.clicked.connect(self.plot_rank)
         self.plot_pcoa_button.clicked.connect(self.plot_pcoa)
+        self.anova_button.clicked.connect(self.anova)
+        self.ttest_button.clicked.connect(self.t_test)
+        self.textEdit.setText("Welcome to the StatApp! \nPlease import your file for statistical analysis.")
 
         # setup default plot settings
         mpl.rcParams['font.size'] = 8
@@ -91,14 +87,17 @@ class MainWindow(QMainWindow):
         dialog.setNameFilter("Tab-sep. files (*.csv *.tsv)")
         dialog.setViewMode(QFileDialog.ViewMode.List)
         if dialog.exec():
-            file_name = dialog.selectedFiles()
-            if file_name:
-                file_path = file_name[0]
-                otu_mat, tax_mat, metadata = self.process_file(file_path)
+            selected_path = dialog.selectedFiles()
+            if selected_path:
+                filepath = selected_path[0]
+                filename = os.path.basename(filepath)
+                otu_mat, tax_mat, metadata = self.process_file(filepath)
                 self.data_input = MicrobiomeDataAnalyzer(otu_mat, tax_mat, metadata) # Does saving input data as attribute make sense?
+                # beta_div = self.data_input.beta_diversity()
         DT = self.data_input.OTU_table
         model = TableModel(DT)
         self.tableView.setModel(model)
+        self.textEdit.setText(f"File name: {filename}")
 
     def process_file(self, file_path):
         otu_mat = otu_table(file_path)
@@ -124,54 +123,54 @@ class MainWindow(QMainWindow):
     def clear_canvas(self):
         self.graph_widget.axes.clear()
 
+    def t_test(self):
+        self.textEdit.clear()
+        result = self.data_input.t_test()
+        # Display the results
+        for otu, (t_stat, p_value) in result.items():
+            self.textEdit.append(f"{otu}: T statistic = {t_stat}, P-value = {p_value}")
+
+    def anova(self):
+        self.textEdit.clear()
+        result = self.data_input.anova_test()
+        # Display the results
+        for otu, (f_value, p_value) in result.items():
+            self.textEdit.append(f"{otu}: F-value = {f_value}, P-value = {p_value}")
+
     def plot_stat(self):
         self.clear_canvas()
         # Use the input's plot_top function to render the plot
         top_plot, top_df = self.data_input.plot_top(5, self.graph_widget)
-        # Calculate row-wise totals for percentages
-        totals = top_df.sum(axis=1)
-
-        def on_click(event):
-            # Check if the click occurred inside the axes
-            if event.inaxes == self.graph_widget.axes:
-                for bar_group, group_name in zip(top_plot.containers, top_df.columns):
-                    for rect, value, total in zip(bar_group, top_df[group_name], totals):
-                        height = rect.get_height()
-                        # Check if the mouse click is inside the rectangle
-                        if rect.contains(event)[0]:  # Returns (True, details) if inside
-                            taxon = group_name
-                            percentage = f'{(value / total) * 100:.1f}%'  # Calculate percentage
-                            self.statusBar().showMessage(f"Taxon:{taxon}, Percentage: {percentage}, Read Count: {height}")
-                            break
 
         # Connect the event handler to the canvas
-        self.graph_widget.mpl_connect("button_press_event", on_click)
+        self.graph_widget.mpl_connect("button_press_event", lambda event: self.on_click(event, top_plot, top_df))
 
     def plot_rank(self):
         self.clear_canvas()
 
         # Use the input's plot_top function to render the plot
         rank_plot, rank_df = self.data_input.plot_rank("Phylum", self.graph_widget)
-        # Calculate row-wise totals for percentages
-        totals = rank_df.sum(axis=1)
-        def on_click(event):
-            # Check if the click occurred inside the axes
-            if event.inaxes == self.graph_widget.axes:
-                for bar_group, group_name in zip(rank_plot.containers, rank_df.columns):
-                    for rect, value, total in zip(bar_group, rank_df[group_name], totals):
-                        height = rect.get_height()
-                        # Check if the mouse click is inside the rectangle
-                        if rect.contains(event)[0]:  # Returns (True, details) if inside
-                            taxon = group_name
-                            percentage = f'{(value / total) * 100:.1f}%'  # Calculate percentage
-                            self.statusBar().showMessage(f"Taxon:{taxon}, Percentage: {percentage}, Read Count: {height}")
-                            break
 
         # Connect the event handler to the canvas
-        self.graph_widget.mpl_connect("button_press_event", on_click)
+        self.graph_widget.mpl_connect("button_press_event", lambda event: self.on_click(event, rank_plot, rank_df))
 
     def plot_pcoa(self):
-        ...
+        self.clear_canvas()
+        self.data_input.plot_pcoa(self.graph_widget)
+
+    def on_click(self, event, plot, df):
+        totals = df.sum(axis=1)
+        # Check if the click occurred inside the axes
+        if event.inaxes == self.graph_widget.axes:
+            for bar_group, group_name in zip(plot.containers, df.columns):
+                for rect, value, total in zip(bar_group, df[group_name], totals):
+                    height = rect.get_height()
+                    # Check if the mouse click is inside the rectangle
+                    if rect.contains(event)[0]:  # Returns (True, details) if inside
+                        taxon = group_name
+                        percentage = f'{(value / total) * 100:.1f}%'  # Calculate percentage
+                        self.statusBar().showMessage(f"Taxon:{taxon}, Percentage: {percentage}, Read Count: {height}")
+                        break
 
     def on_plot_click(self, event):
         if event.inaxes:  # Check if the click is inside the plot area
@@ -179,7 +178,15 @@ class MainWindow(QMainWindow):
             # Display the clicked coordinates
             self.statusBar().showMessage(f"Clicked at: x={x:.2f}, y={y:.2f}")
 
-app = QApplication(sys.argv)
-w = MainWindow()
-w.show()
-app.exec()
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    w = MainWindow()
+    w.show()
+    sys.exit(app.exec())
+
+# ToDo:
+# 1. Add descriptions to OTUs in the table (Drop down)
+# 2. Abundanices: give a choice: relative or absolute
+# 3. Create a separate table with results
+# Testing: for each row in the newly created table show a plot
+# 4. Keep everything basic, look for traditional GUI interface layout.

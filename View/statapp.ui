@@ -30,39 +30,50 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QPushButton" name="plot_top_button">
-        <property name="text">
-         <string>Plot top 5 taxa</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="plot_rank_button">
-        <property name="text">
-         <string>Plot rank</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="plot_pcoa_button">
-        <property name="text">
-         <string>Plot PCoA</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="pushButton_4">
-        <property name="text">
-         <string>PushButton</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="pushButton_5">
-        <property name="text">
-         <string>PushButton</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QPushButton" name="plot_top_button">
+            <property name="text">
+             <string>Plot top 5 taxa</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="plot_pcoa_button">
+            <property name="text">
+             <string>Plot PCoA</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="plot_rank_button">
+            <property name="text">
+             <string>Plot rank</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="ttest_button">
+            <property name="text">
+             <string>t-Test</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="anova_button">
+            <property name="text">
+             <string>ANOVA</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QTextEdit" name="textEdit"/>
+        </item>
+       </layout>
       </item>
       <item>
        <widget class="QTableView" name="tableView">

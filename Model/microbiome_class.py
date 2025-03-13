@@ -105,6 +105,10 @@ class MicrobiomeDataAnalyzer:
         canvas.axes.set_ylabel('PC2', fontsize=14)
         canvas.axes.set_title('PCoA of Beta Diversity', fontsize=16)
         canvas.axes.legend(loc='upper left', bbox_to_anchor=(1, 1))
+        canvas.figure.tight_layout()  # Automatically adjust layout to fit labels
+        canvas.draw()
+
+        # return resulting_plot, df_t
 
 # Class MicrobiomeDataAnalyzer.
 # Contains: OTU table, Taxa table and corresponding metadata
@@ -114,15 +118,15 @@ class MicrobiomeDataAnalyzer:
 #         self.Taxa_table = Taxa_table
 #         self.Metadata = Metadata
 #
-#     def prepare_dataset(self):
-#         otumat_transposed = self.OTU_table.T
-#         otumat_transposed = otumat_transposed.reset_index()
-#         otumat_transposed = otumat_transposed.rename(columns={'index': 'SampleID'})
-#         filtered_metadata = self.Metadata.drop("Property", axis='columns')
-#         input_data = pd.merge(otumat_transposed, filtered_metadata, on='SampleID')
-#         column_to_move = input_data.pop("Group")
-#         input_data.insert(1, "Group", column_to_move)
-#         return input_data
+    def prepare_dataset(self):
+        otumat_transposed = self.OTU_table.T
+        otumat_transposed = otumat_transposed.reset_index()
+        otumat_transposed = otumat_transposed.rename(columns={'index': 'SampleID'})
+        filtered_metadata = self.Metadata.drop("Property", axis='columns')
+        input_data = pd.merge(otumat_transposed, filtered_metadata, on='SampleID')
+        column_to_move = input_data.pop("Group")
+        input_data.insert(1, "Group", column_to_move)
+        return input_data
 #
 #     def abundance_table(self):
 #         abundance_table = self.OTU_table.copy()
@@ -229,121 +233,117 @@ class MicrobiomeDataAnalyzer:
 #     # 4. permanova()
 #     # 5. beta_diversity()
 #     # Perform an independent t-Test
-#     def t_test(self):
-#         # Prepare the dataset
-#         input_data = self.prepare_dataset()
-#
-#         # Find all unique color groups in the dataset.
-#         unique_groups = input_data['Group'].unique()
-#         # Save the possible colors
-#         column_property = input_data['Group']
-#
-#         # Perform t-Test for each OTU column
-#         t_test_results = {}
-#         for otu in input_data.columns[2:]:  # Skipping 'SampleID' and 'Property'
-#
-#             # Filter the dataframe by color and drop missing values.
-#             groups = [input_data[column_property == property][otu].dropna() for property in unique_groups]
-#
-#             t_stat, p_value = stats.ttest_ind(*groups)
-#
-#             # Store the results
-#             t_test_results[otu] = (t_stat, p_value)
-#
-#         # Display the results
-#         for otu, (t_stat, p_value) in t_test_results.items():
-#             print(f"{otu}: T statistic = {t_stat}, P-value = {p_value}")
-#
-#     # Perform Anova-Test
-#     def anova_test(self):
-#         # Prepare the dataset
-#         input_data = self.prepare_dataset()
-#         # Prepare groups for ANOVA
-#         # Find all unique groups in the dataset.
-#         unique_groups = input_data['Group'].unique()
-#         # Save the possible properties (for example: fur color of the subject)
-#         column_property = input_data['Group']
-#
-#         # Perform ANOVA for each OTU column
-#         anova_results = {}
-#         for otu in input_data.columns[2:]:  # Skipping 'SampleID' and 'Property'
-#
-#             # Filter the dataframe by color and drop missing values.
-#             groups = [input_data[column_property == property][otu].dropna() for property in unique_groups]
-#
-#             f_value, p_value = stats.f_oneway(*groups)
-#
-#             # Store the results
-#             anova_results[otu] = (f_value, p_value)
-#
-#         # Display the results
-#         for otu, (f_value, p_value) in anova_results.items():
-#             print(f"{otu}: F-value = {f_value}, P-value = {p_value}")
-#
-#     # Perform Kruskal test. Alternative to the ANOVA-test. Data does not have to be normally distributed.
-#     def kruskal(self):
-#         # Prepare the dataset
-#         input_data = self.prepare_dataset()
-#         # Find all unique groups in the dataset.
-#         unique_groups = input_data['Group'].unique()
-#         # Save the possible properties (for example: fur color of the subject)
-#         column_property = input_data['Group']
-#
-#         # Perform Kruskal for each OTU column
-#         kruskal_results = {}
-#         for otu in input_data.columns[2:]:  # Skipping 'SampleID' and 'Property'
-#
-#             # Filter the dataframe by color and drop missing values.
-#             groups = [input_data[column_property == property][otu].dropna() for property in unique_groups]
-#
-#             stat, p_value = stats.kruskal(*groups)
-#
-#             # Store the results
-#             kruskal_results[otu] = (stat, p_value)
-#
-#         # Display the results
-#         for otu, (stat, p_value) in kruskal_results.items():
-#             print(f"{otu}: H-statistic = {stat}, P-value = {p_value}")
-#
-#     def wilcoxon_test(self):
-#         # Prepare the dataset
-#         input_data = self.prepare_dataset()
-#
-#         # Assuming two unique groups represent paired data (e.g., "before" and "after")
-#         if len(input_data['Group'].unique()) != 2:
-#             raise ValueError("There must be exactly two groups for the Wilcoxon signed-rank test.")
-#
-#         # Retrieve the unique groups for clarity
-#         group1, group2 = input_data['Group'].unique()
-#
-#         # Perform Wilcoxon test for each OTU column
-#         wilcoxon_results = {}
-#
-#         for otu in input_data.columns[2:]:  # Skipping 'SampleID' and 'Group'
-#
-#             # Filter the dataframe by group and drop missing values
-#             group1_data = input_data[input_data['Group'] == group1][otu].dropna()
-#             group2_data = input_data[input_data['Group'] == group2][otu].dropna()
-#
-#             # Ensure equal lengths before performing the test
-#             min_len = min(len(group1_data), len(group2_data))
-#             if min_len > 0:
-#                 stat, p_value = wilcoxon(group1_data[:min_len], group2_data[:min_len])
-#
-#                 # Store the results
-#                 wilcoxon_results[otu] = (stat, p_value)
-#             else:
-#                 wilcoxon_results[otu] = (None, None)
-#
-#         # Display the results
-#         for otu, (stat, p_value) in wilcoxon_results.items():
-#             print(f"{otu}: Wilcoxon statistic = {stat}, P-value = {p_value}")
-#
-#     def permanova(self):
-#         distance = self.beta_diversity()
-#         grouping = self.Metadata['Group']
-#         permanova_results = permanova(distance, grouping)
-#         return permanova_results
+    def t_test(self):
+        # Prepare the dataset
+        input_data = self.prepare_dataset()
+
+        # Find all unique color groups in the dataset.
+        unique_groups = input_data['Group'].unique()
+        # Save the possible colors
+        column_property = input_data['Group']
+
+        # Perform t-Test for each OTU column
+        t_test_results = {}
+        for otu in input_data.columns[2:]:  # Skipping 'SampleID' and 'Property'
+
+            # Filter the dataframe by color and drop missing values.
+            groups = [input_data[column_property == property][otu].dropna() for property in unique_groups]
+
+            t_stat, p_value = stats.ttest_ind(*groups)
+
+            # Store the results
+            t_test_results[otu] = (t_stat, p_value)
+
+        return t_test_results
+
+    # Perform Anova-Test
+    def anova_test(self):
+        # Prepare the dataset
+        input_data = self.prepare_dataset()
+        # Prepare groups for ANOVA
+        # Find all unique groups in the dataset.
+        unique_groups = input_data['Group'].unique()
+        # Save the possible properties (for example: fur color of the subject)
+        column_property = input_data['Group']
+
+        # Perform ANOVA for each OTU column
+        anova_results = {}
+        for otu in input_data.columns[2:]:  # Skipping 'SampleID' and 'Property'
+
+            # Filter the dataframe by color and drop missing values.
+            groups = [input_data[column_property == property][otu].dropna() for property in unique_groups]
+
+            f_value, p_value = stats.f_oneway(*groups)
+
+            # Store the results
+            anova_results[otu] = (f_value, p_value)
+
+        return anova_results
+
+    # Perform Kruskal test. Alternative to the ANOVA-test. Data does not have to be normally distributed.
+    def kruskal(self):
+        # Prepare the dataset
+        input_data = self.prepare_dataset()
+        # Find all unique groups in the dataset.
+        unique_groups = input_data['Group'].unique()
+        # Save the possible properties (for example: fur color of the subject)
+        column_property = input_data['Group']
+
+        # Perform Kruskal for each OTU column
+        kruskal_results = {}
+        for otu in input_data.columns[2:]:  # Skipping 'SampleID' and 'Property'
+
+            # Filter the dataframe by color and drop missing values.
+            groups = [input_data[column_property == property][otu].dropna() for property in unique_groups]
+
+            stat, p_value = stats.kruskal(*groups)
+
+            # Store the results
+            kruskal_results[otu] = (stat, p_value)
+
+        # Display the results
+        for otu, (stat, p_value) in kruskal_results.items():
+            print(f"{otu}: H-statistic = {stat}, P-value = {p_value}")
+
+    def wilcoxon_test(self):
+        # Prepare the dataset
+        input_data = self.prepare_dataset()
+
+        # Assuming two unique groups represent paired data (e.g., "before" and "after")
+        if len(input_data['Group'].unique()) != 2:
+            raise ValueError("There must be exactly two groups for the Wilcoxon signed-rank test.")
+
+        # Retrieve the unique groups for clarity
+        group1, group2 = input_data['Group'].unique()
+
+        # Perform Wilcoxon test for each OTU column
+        wilcoxon_results = {}
+
+        for otu in input_data.columns[2:]:  # Skipping 'SampleID' and 'Group'
+
+            # Filter the dataframe by group and drop missing values
+            group1_data = input_data[input_data['Group'] == group1][otu].dropna()
+            group2_data = input_data[input_data['Group'] == group2][otu].dropna()
+
+            # Ensure equal lengths before performing the test
+            min_len = min(len(group1_data), len(group2_data))
+            if min_len > 0:
+                stat, p_value = wilcoxon(group1_data[:min_len], group2_data[:min_len])
+
+                # Store the results
+                wilcoxon_results[otu] = (stat, p_value)
+            else:
+                wilcoxon_results[otu] = (None, None)
+
+        # Display the results
+        for otu, (stat, p_value) in wilcoxon_results.items():
+            print(f"{otu}: Wilcoxon statistic = {stat}, P-value = {p_value}")
+
+    def permanova(self):
+        distance = self.beta_diversity()
+        grouping = self.Metadata['Group']
+        permanova_results = permanova(distance, grouping)
+        return permanova_results
 
 # # Alice and Bob
 # otumat_alice_bob = otu_table('alice_bob.csv')
