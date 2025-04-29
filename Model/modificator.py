@@ -1,5 +1,4 @@
 import pandas as pd
-import datatable as dt
 from io import StringIO
 from Model.get_lineage import get_lineage
 from functools import reduce

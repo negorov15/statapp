@@ -1,5 +1,6 @@
 import sys
 import os
+import numpy as np
 import pandas as pd
 
 import matplotlib as mpl
@@ -14,7 +15,7 @@ from PyQt6.QtWidgets import (
     QGridLayout, QWidget, QMenu, QHBoxLayout, QTableView, QSizePolicy, QSplitter
 )
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QStandardItemModel, QStandardItem
-from PyQt6.QtCore import Qt, QSize, QAbstractTableModel
+from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex
 
 from Model.microbiome_class import MicrobiomeDataAnalyzer
 from Model.modificator import otu_table, tax_table
@@ -97,11 +98,17 @@ class MainWindow(QMainWindow):
         DT = self.data_input.OTU_table
         model = TableModel(DT)
         self.tableView.setModel(model)
+        #self.tableView.setVerticalHeaderLabels(all_taxa.to_list())
         self.textEdit.setText(f"File name: {filename}")
+        # Connect click signal
+        self.tableView.clicked.connect(self.on_taxa_cell_clicked)
 
     def process_file(self, file_path):
         otu_mat = otu_table(file_path)
         tax_mat = tax_table(file_path)
+        last_assigned_taxon = tax_mat.apply(lambda row: row.dropna().iloc[-1] if not row.dropna().empty else np.nan,
+                                            axis=1)
+        otu_mat.insert(0, 'Taxa', last_assigned_taxon)
         metadata = {
             'SampleID': ['Alice00-1mio.daa', 'Alice01-1mio.daa',
                          'Alice03-1mio.daa', 'Alice06-1mio.daa',
@@ -178,6 +185,26 @@ class MainWindow(QMainWindow):
             # Display the clicked coordinates
             self.statusBar().showMessage(f"Clicked at: x={x:.2f}, y={y:.2f}")
 
+    def on_taxa_cell_clicked(self, index: QModelIndex):
+        # index holds both row & column
+        if index.column() != 0:
+            return
+
+        # Retrieve the taxon name
+        taxa_name = index.data()
+
+        # Lookup full classification
+        try:
+            tab = self.data_input.Taxa_table
+            full_tax = self.data_input.Taxa_table.loc[taxa_name]
+        except KeyError:
+            self.taxonomy_display.setText(f"No full taxonomy found for '{taxa_name}'")
+            return
+
+        # Format for display
+        lines = [f"{rank}: {name}" for rank, name in full_tax.items()]
+        self.taxonomy_display.setText("\n".join(lines))
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     w = MainWindow()
@@ -185,8 +212,9 @@ if __name__ == '__main__':
     sys.exit(app.exec())
 
 # ToDo:
-# 1. Add descriptions to OTUs in the table (Drop down)
-# 2. Abundanices: give a choice: relative or absolute
-# 3. Create a separate table with results
-# Testing: for each row in the newly created table show a plot
-# 4. Keep everything basic, look for traditional GUI interface layout.
+# 1. Add descriptions to OTUs in the table (Drop down).
+# Or: lowest rank in the table, once user clicks on the cell, show whole phylogeny on the left
+# 2. Give a choice: relative or absolute abundancies
+# 3. Create a separate table with test results?
+# 4. For testing: for each row in the newly created table show a plot
+# Keep everything basic, look for traditional GUI interface layout.

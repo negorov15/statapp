@@ -7,6 +7,7 @@ from skbio.stats.distance import permanova
 from Model.get_lineage import *
 from skbio.stats.ordination import pcoa
 from skbio.diversity import beta_diversity
+from Model.modificator import otu_table, tax_table
 
 class MicrobiomeDataAnalyzer:
 
@@ -345,7 +346,7 @@ class MicrobiomeDataAnalyzer:
         permanova_results = permanova(distance, grouping)
         return permanova_results
 
-# # Alice and Bob
+# Alice and Bob
 # otumat_alice_bob = otu_table('alice_bob.csv')
 # taxmat_alice_bob = tax_table('alice_bob.csv')
 # metadata_dict_alice_bob = {
@@ -364,6 +365,7 @@ class MicrobiomeDataAnalyzer:
 # }
 # metadata_alice_bob = pd.DataFrame(metadata_dict_alice_bob)
 # sample_alice_bob = MicrobiomeDataAnalyzer(otumat_alice_bob, taxmat_alice_bob, metadata_alice_bob)
+# print(taxmat_alice_bob.apply(lambda row: row.dropna().iloc[-1] if not row.dropna().empty else np.nan, axis=1))
 #
 # # sample_alice_bob.plot_rank('Phylum')
 # # sample_alice_bob.plot_top(5)
