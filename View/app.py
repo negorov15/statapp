@@ -92,10 +92,10 @@ class MainWindow(QMainWindow):
             if selected_path:
                 filepath = selected_path[0]
                 filename = os.path.basename(filepath)
-                otu_mat, tax_mat, metadata = self.process_file(filepath)
+                otu_mat, otu_mat_copy, tax_mat, metadata = self.process_file(filepath)
                 self.data_input = MicrobiomeDataAnalyzer(otu_mat, tax_mat, metadata) # Does saving input data as attribute make sense?
                 # beta_div = self.data_input.beta_diversity()
-        DT = self.data_input.OTU_table
+        DT = otu_mat_copy
         model = TableModel(DT)
         self.tableView.setModel(model)
         #self.tableView.setVerticalHeaderLabels(all_taxa.to_list())
@@ -108,7 +108,8 @@ class MainWindow(QMainWindow):
         tax_mat = tax_table(file_path)
         last_assigned_taxon = tax_mat.apply(lambda row: row.dropna().iloc[-1] if not row.dropna().empty else np.nan,
                                             axis=1)
-        otu_mat.insert(0, 'Taxa', last_assigned_taxon)
+        otu_mat_copy = otu_mat.copy()
+        otu_mat_copy.insert(0, 'Lowest Taxa', last_assigned_taxon)
         metadata = {
             'SampleID': ['Alice00-1mio.daa', 'Alice01-1mio.daa',
                          'Alice03-1mio.daa', 'Alice06-1mio.daa',
@@ -124,7 +125,7 @@ class MainWindow(QMainWindow):
                          '0-', '1+', '3+', '6+', '8-', '34-']
         }
         metadata_alice_bob = pd.DataFrame(metadata)
-        return otu_mat, tax_mat, metadata_alice_bob
+        return otu_mat, otu_mat_copy, tax_mat, metadata_alice_bob
 
     # Cleans subplots for new plotting functions
     def clear_canvas(self):
@@ -195,15 +196,25 @@ class MainWindow(QMainWindow):
 
         # Lookup full classification
         try:
-            tab = self.data_input.Taxa_table
-            full_tax = self.data_input.Taxa_table.loc[taxa_name]
+            tax_tab = self.data_input.Taxa_table
+            # Find location of the value
+            matches = tax_tab[tax_tab == taxa_name]
+
+            # Drop all rows that are entirely NaN (i.e., no matches)
+            non_empty_matches = matches.dropna(how='all')
+
+            # Get the first matching row (row with the first occurrence of taxa_name)
+            full_tax = non_empty_matches.iloc[0]
+            # full_tax = ', '.join(f'{k}: {v}' for k, v in result.items())
+
         except KeyError:
-            self.taxonomy_display.setText(f"No full taxonomy found for '{taxa_name}'")
+            self.statusBar().showMessage(f"No full taxonomy found for '{taxa_name}'")
             return
 
         # Format for display
         lines = [f"{rank}: {name}" for rank, name in full_tax.items()]
-        self.taxonomy_display.setText("\n".join(lines))
+
+        self.statusBar().showMessage(', '.join(map(str, lines)))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -217,4 +228,5 @@ if __name__ == '__main__':
 # 2. Give a choice: relative or absolute abundancies
 # 3. Create a separate table with test results?
 # 4. For testing: for each row in the newly created table show a plot
+# 5. Plot rank: add other rank possibilities
 # Keep everything basic, look for traditional GUI interface layout.
