@@ -32,7 +32,7 @@ def get_lineage(dataset):
 # Input: List of lineages
 # Output: List of sorted lineages
 def sort_ranks(data):
-    major_ranks = ["superkingdom", "phylum", "class", "order", "family", "genus", "species"]
+    major_ranks = ["superkingdom", "domain", "phylum", "class", "order", "family", "genus", "species"]
     sorted_ranks = []
     for lineage in data:
         # Temporary list for storing ranks.
