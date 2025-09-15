@@ -187,6 +187,8 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(f"Clicked at: x={x:.2f}, y={y:.2f}")
 
     def on_taxa_cell_clicked(self, index: QModelIndex):
+        from ete3 import NCBITaxa
+        ncbi = NCBITaxa()
         # index holds both row & column
         if index.column() != 0:
             return
@@ -198,23 +200,32 @@ class MainWindow(QMainWindow):
         try:
             tax_tab = self.data_input.Taxa_table
             # Find location of the value
-            matches = tax_tab[tax_tab == taxa_name]
+            # matches = tax_tab[tax_tab == taxa_name]
+            # Step 1: Convert name to taxid
+            name2taxid = ncbi.get_name_translator([taxa_name])
+            taxid = name2taxid[taxa_name][0]
 
-            # Drop all rows that are entirely NaN (i.e., no matches)
-            non_empty_matches = matches.dropna(how='all')
+            # Step 2: Get full lineage taxids
+            lineage = ncbi.get_lineage(taxid)
 
-            # Get the first matching row (row with the first occurrence of taxa_name)
-            full_tax = non_empty_matches.iloc[0]
-            # full_tax = ', '.join(f'{k}: {v}' for k, v in result.items())
+            # Step 4: (Optional) Get ranks for each taxid
+            major_ranks = ["superkingdom", "domain", "phylum", "class", "order", "family", "genus", "species"]
+            ranks = ncbi.get_rank(lineage)
+            sorted_ranks = {k: v for (k, v) in ranks.items() if v in major_ranks}
+            sorted_lineage = [k for (k,v) in sorted_ranks.items()]
+            # Step 3: Map lineage taxids to names
+            names = ncbi.get_taxid_translator(sorted_lineage)
+            # Build ordered path (Domain → ... → species/order/etc.)
+
+            taxonomy_path = [names[t] for t in sorted_lineage]
 
         except KeyError:
             self.statusBar().showMessage(f"No full taxonomy found for '{taxa_name}'")
             return
 
         # Format for display
-        lines = [f"{rank}: {name}" for rank, name in full_tax.items()]
 
-        self.statusBar().showMessage(', '.join(map(str, lines)))
+        self.statusBar().showMessage(', '.join(map(str, taxonomy_path)))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

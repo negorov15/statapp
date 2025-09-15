@@ -4,10 +4,56 @@ from ete3 import NCBITaxa
 ncbi = NCBITaxa()
 #ncbi.update_taxonomy_database()
 
-# Function gets a lineage for each taxa ID for tax matrix.
-# Input: pandas DataFrame dataset
-# Output: list of lineages
+def get_lineage_from_cell(taxa_name):
+
+    # Step 1: Convert name to taxid
+    name2taxid = ncbi.get_name_translator([taxa_name])
+    taxid = name2taxid[taxa_name][0]
+
+    # Step 2: Get full lineage taxids
+    lineage = ncbi.get_lineage(taxid)
+
+    # Step 3: Map lineage taxids to names
+    names = ncbi.get_taxid_translator(lineage)
+
+    # Step 4: (Optional) Get ranks for each taxid
+    template = ["Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"]
+    ranks = ncbi.get_rank(lineage)
+
+    # Build ordered path (Domain → ... → species/order/etc.)
+    taxonomy_path = [names[t] for t in lineage if t in template]
+
+    return taxonomy_path
+
 def get_lineage(dataset):
+    """
+        Reads a tab-delimited dataset containing a column 'Taxa' with NCBI taxonomy IDs
+        and returns their corresponding full taxonomic lineages.
+
+        Steps:
+        1. Reads the dataset into a DataFrame.
+        2. Iterates through the Taxa IDs:
+            - If the ID is -2, appends 'Not assigned' to the result list.
+            - Otherwise, queries the ETE3 NCBITaxa database to fetch the full lineage.
+            - Skips invalid/missing taxon IDs that raise ValueError.
+        3. Passes the collected lineages through:
+            - sort_ranks(): to arrange lineage elements consistently by rank.
+            - translate_lineage(): to convert taxon IDs into human-readable taxonomic names.
+        4. Returns a list of translated lineage strings.
+
+        Parameters
+        ----------
+        dataset : str
+            Path to a tab-delimited file (.tsv) with at least one column named 'Taxa'.
+
+        Returns
+        -------
+        list
+            A list of strings where each string represents the full lineage of a taxon.
+            Example: ["Bacteria; Proteobacteria; Gammaproteobacteria; Enterobacterales; ..."]
+            For -2 entries, "Not assigned" is returned instead.
+        """
+
     # Read the input file
     df = pd.read_csv(dataset, delimiter="\t")
     list_of_lineages = []
