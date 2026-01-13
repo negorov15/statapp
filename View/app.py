@@ -232,12 +232,3 @@ if __name__ == '__main__':
     w = MainWindow()
     w.show()
     sys.exit(app.exec())
-
-# ToDo:
-# 1. Add descriptions to OTUs in the table (Drop down).
-# Or: lowest rank in the table, once user clicks on the cell, show whole phylogeny on the left
-# 2. Give a choice: relative or absolute abundancies
-# 3. Create a separate table with test results?
-# 4. For testing: for each row in the newly created table show a plot
-# 5. Plot rank: add other rank possibilities
-# Keep everything basic, look for traditional GUI interface layout.
